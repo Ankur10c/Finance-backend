@@ -2,26 +2,18 @@ const Record = require('../models/Record');
 
 exports.getSummary = async (req, res) => {
   try {
-    const records = await Record.find();
+    // User isolation - only fetch current user's records
+    const records = await Record.find({ createdBy: req.user.id }).sort({ date: -1 });
+
     let totalIncome = 0;
     let totalExpense = 0;
-    const categoryTotals = {};
+    const incomeCategoryTotals = {};
+    const expenseCategoryTotals = {};
 
-    records.forEach(r => {
-      if (r.type === 'income') totalIncome += r.amount;
-      else totalExpense += r.amount;
-      if (!categoryTotals[r.category]) categoryTotals[r.category] = 0;
-      categoryTotals[r.category] += r.amount;
-    });
+    // Date filtering
+    const { startDate, endDate } = req.query;
 
-    res.json({
-      totalIncome,
-      totalExpense,
-      netBalance: totalIncome - totalExpense,
-      categoryTotals,
-      recentRecords: records.slice(-5)
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+    const filtered = records.filter(r => {
+      if (startDate && new Date(r.date) < new Date(startDate)) return false;
+      if (endDat
+        
